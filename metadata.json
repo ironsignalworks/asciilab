@@ -1,0 +1,5 @@
+{
+  "name": "ASCII Lab",
+  "description": "A lightweight, self-contained FIGlet-style ASCII art generator with live preview and 100+ fonts.",
+  "requestFramePermissions": []
+}
