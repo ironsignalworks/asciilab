@@ -53,6 +53,27 @@ const POPULAR_FONTS = [
   'Three Point', 'Toke', 'Trek', 'Twall', 'Univers', 'USA Flag', 'Wavy', 'Whimsy'
 ];
 
+const LAYOUT_OPTIONS: figlet.KerningMethods[] = [
+  'default',
+  'full',
+  'fitted',
+  'controlled smushing',
+  'universal smushing'
+];
+
+const parseNumberInRange = (value: string | null, fallback: number, min: number, max: number) => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  if (Number.isNaN(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+};
+
+const parseLayout = (value: string | null, fallback: figlet.KerningMethods) => {
+  if (value && LAYOUT_OPTIONS.includes(value as figlet.KerningMethods)) {
+    return value as figlet.KerningMethods;
+  }
+  return fallback;
+};
+
 export default function App() {
   // --- State ---
   const [text, setText] = useState(() => {
@@ -65,11 +86,31 @@ export default function App() {
     const params = new URLSearchParams(hash);
     return params.get('f') || 'Standard';
   });
-  const [width, setWidth] = useState(80);
-  const [isAutoWidth, setIsAutoWidth] = useState(false);
-  const [previewFontSize, setPreviewFontSize] = useState(12);
-  const [hLayout, setHLayout] = useState<figlet.KerningMethods>('default');
-  const [vLayout, setVLayout] = useState<figlet.KerningMethods>('default');
+  const [width, setWidth] = useState(() => {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    return parseNumberInRange(params.get('w'), 80, 10, 200);
+  });
+  const [isAutoWidth, setIsAutoWidth] = useState(() => {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    return params.get('aw') === '1';
+  });
+  const [previewFontSize, setPreviewFontSize] = useState(() => {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    return parseNumberInRange(params.get('fs'), 12, 10, 20);
+  });
+  const [hLayout, setHLayout] = useState<figlet.KerningMethods>(() => {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    return parseLayout(params.get('hl'), 'default');
+  });
+  const [vLayout, setVLayout] = useState<figlet.KerningMethods>(() => {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    return parseLayout(params.get('vl'), 'default');
+  });
   const [output, setOutput] = useState('');
   const [isRendering, setIsRendering] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -99,8 +140,13 @@ export default function App() {
     const params = new URLSearchParams();
     params.set('t', text);
     params.set('f', font);
+    params.set('w', String(width));
+    params.set('aw', isAutoWidth ? '1' : '0');
+    params.set('hl', hLayout);
+    params.set('vl', vLayout);
+    params.set('fs', String(previewFontSize));
     window.location.hash = params.toString();
-  }, [text, font]);
+  }, [text, font, width, isAutoWidth, hLayout, vLayout, previewFontSize]);
 
   useEffect(() => {
     localStorage.setItem('taag-favorites', JSON.stringify(favorites));
@@ -236,8 +282,33 @@ export default function App() {
     const params = new URLSearchParams();
     params.set('t', text);
     params.set('f', font);
+    params.set('w', String(width));
+    params.set('aw', isAutoWidth ? '1' : '0');
+    params.set('hl', hLayout);
+    params.set('vl', vLayout);
+    params.set('fs', String(previewFontSize));
     const exportUrl = `${window.location.origin}${window.location.pathname}#${params.toString()}`;
-    window.open(exportUrl, '_blank', 'noopener,noreferrer');
+    const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
+
+    try {
+      if (isMobile && typeof navigator.share === 'function') {
+        await navigator.share({
+          title: 'ASCII Lab Export URL',
+          text: 'ASCII Lab share link',
+          url: exportUrl
+        });
+        return;
+      }
+
+      const newTab = window.open(exportUrl, '_blank', 'noopener,noreferrer');
+      if (newTab) return;
+
+      await navigator.clipboard.writeText(exportUrl);
+      window.prompt('Copy this URL:', exportUrl);
+    } catch (err) {
+      window.prompt('Copy this URL:', exportUrl);
+      console.error('URL export failed:', err);
+    }
   };
 
   const handleExportPng = async (transparent: boolean) => {
