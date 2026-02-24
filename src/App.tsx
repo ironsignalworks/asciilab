@@ -22,7 +22,6 @@ import {
   Activity,
   Cpu,
   Sliders,
-  Link2,
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { motion, AnimatePresence } from 'motion/react';
@@ -278,39 +277,6 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportUrl = async () => {
-    const params = new URLSearchParams();
-    params.set('t', text);
-    params.set('f', font);
-    params.set('w', String(width));
-    params.set('aw', isAutoWidth ? '1' : '0');
-    params.set('hl', hLayout);
-    params.set('vl', vLayout);
-    params.set('fs', String(previewFontSize));
-    const exportUrl = `${window.location.origin}${window.location.pathname}#${params.toString()}`;
-    const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
-
-    try {
-      if (isMobile && typeof navigator.share === 'function') {
-        await navigator.share({
-          title: 'ASCII Lab Export URL',
-          text: 'ASCII Lab share link',
-          url: exportUrl
-        });
-        return;
-      }
-
-      const newTab = window.open(exportUrl, '_blank', 'noopener,noreferrer');
-      if (newTab) return;
-
-      await navigator.clipboard.writeText(exportUrl);
-      window.prompt('Copy this URL:', exportUrl);
-    } catch (err) {
-      window.prompt('Copy this URL:', exportUrl);
-      console.error('URL export failed:', err);
-    }
-  };
-
   const handleExportPng = async (transparent: boolean) => {
     if (!outputRef.current) return;
     setIsExporting(true);
@@ -518,13 +484,6 @@ export default function App() {
               >
                 <Copy size={14} />
                 {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
-              </button>
-              <button
-                onClick={handleExportUrl}
-                className="hidden sm:flex h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest transition-all items-center gap-2 border bg-black/40 border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]"
-              >
-                <Link2 size={14} />
-                URL
               </button>
               <button 
                 onClick={handleDownload}
@@ -921,13 +880,7 @@ export default function App() {
         </div>
 
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#0D0D0F]/95 border-t border-[#00FF41]/20 backdrop-blur-md">
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={handleExportUrl}
-              className="h-10 px-3 text-[10px] font-black uppercase tracking-widest border transition-all flex items-center justify-center gap-2 bg-black/60 border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/80"
-            >
-              <Link2 size={14} /> URL
-            </button>
+          <div className="grid grid-cols-2 gap-2">
             <button 
               onClick={() => handleExportPng(false)}
               disabled={isExporting}
