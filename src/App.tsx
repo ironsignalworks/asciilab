@@ -22,6 +22,7 @@ import {
   Activity,
   Cpu,
   Sliders,
+  Link2,
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { motion, AnimatePresence } from 'motion/react';
@@ -66,6 +67,7 @@ export default function App() {
   });
   const [width, setWidth] = useState(80);
   const [isAutoWidth, setIsAutoWidth] = useState(false);
+  const [previewFontSize, setPreviewFontSize] = useState(12);
   const [hLayout, setHLayout] = useState<figlet.KerningMethods>('default');
   const [vLayout, setVLayout] = useState<figlet.KerningMethods>('default');
   const [output, setOutput] = useState('');
@@ -230,6 +232,14 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportUrl = async () => {
+    const params = new URLSearchParams();
+    params.set('t', text);
+    params.set('f', font);
+    const exportUrl = `${window.location.origin}${window.location.pathname}#${params.toString()}`;
+    window.open(exportUrl, '_blank', 'noopener,noreferrer');
+  };
+
   const handleExportPng = async (transparent: boolean) => {
     if (!outputRef.current) return;
     setIsExporting(true);
@@ -243,10 +253,38 @@ export default function App() {
           margin: '0px'
         }
       });
+      const fileName = `ascii-art-${font.toLowerCase()}${transparent ? '-transparent' : ''}.png`;
+      const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
+      const pngBlob = await fetch(dataUrl).then((res) => res.blob());
+      const pngFile = new File([pngBlob], fileName, { type: 'image/png' });
+
+      if (isMobile && typeof navigator.share === 'function') {
+        const canShareFiles = typeof navigator.canShare === 'function'
+          ? navigator.canShare({ files: [pngFile] })
+          : true;
+
+        if (canShareFiles) {
+          await navigator.share({
+            files: [pngFile],
+            title: 'ASCII Lab Export',
+            text: 'PNG export from ASCII Lab'
+          });
+          return;
+        }
+      }
+
+      const blobUrl = URL.createObjectURL(pngBlob);
       const link = document.createElement('a');
-      link.download = `ascii-art-${font.toLowerCase()}${transparent ? '-transparent' : ''}.png`;
-      link.href = dataUrl;
+      link.href = blobUrl;
+      link.download = fileName;
+      link.rel = 'noopener';
+      if (isMobile) {
+        link.target = '_blank';
+      }
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error('PNG export failed:', err);
     } finally {
@@ -276,16 +314,6 @@ export default function App() {
       return a.localeCompare(b);
     });
   }, [availableFonts, searchQuery, favorites]);
-
-  const mobileSortedFonts = useMemo(() => {
-    return [...availableFonts].sort((a, b) => {
-      const aFav = favorites.includes(a);
-      const bFav = favorites.includes(b);
-      if (aFav && !bFav) return -1;
-      if (!aFav && bFav) return 1;
-      return a.localeCompare(b);
-    });
-  }, [availableFonts, favorites]);
 
   useEffect(() => {
     if (!availableFonts.includes(font)) {
@@ -381,8 +409,8 @@ export default function App() {
               <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="ASCII Lab logo" className="relative z-10 w-[18px] h-[18px]" />
             </div>
             <div className="relative">
-              <h1 className="text-sm font-black tracking-tighter uppercase italic glitch-text" data-text="ASCII LAB">ASCII LAB</h1>
-              <p className="text-[9px] text-[#00FF41]/60 font-mono uppercase tracking-[0.2em]">Art Generator</p>
+              <h1 className="text-xs sm:text-sm font-black tracking-tighter uppercase italic glitch-text" data-text="ASCII LAB">ASCII LAB</h1>
+              <p className="text-[8px] sm:text-[9px] text-[#00FF41]/60 font-mono uppercase tracking-[0.2em]">Art Generator</p>
             </div>
           </div>
 
@@ -420,9 +448,16 @@ export default function App() {
                 <Copy size={14} />
                 {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
               </button>
+              <button
+                onClick={handleExportUrl}
+                className="hidden sm:flex h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest transition-all items-center gap-2 border bg-black/40 border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]"
+              >
+                <Link2 size={14} />
+                URL
+              </button>
               <button 
                 onClick={handleDownload}
-                className="h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest bg-black/40 border border-white/10 hover:border-[#00FF41]/50 text-white/70 transition-all flex items-center gap-2"
+                className="hidden sm:flex h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest bg-black/40 border border-white/10 hover:border-[#00FF41]/50 text-white/70 transition-all items-center gap-2"
               >
                 <Download size={14} />
                 TXT
@@ -472,12 +507,11 @@ export default function App() {
 
                 <div className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                       <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
                         <Sliders size={12} /> WIDTH_PARAM
                       </label>
                 <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-mono text-[#00FF41]">{width}</span>
                         <button 
                           onClick={() => setIsAutoWidth(!isAutoWidth)}
                           className={cn(
@@ -489,20 +523,44 @@ export default function App() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <input
-                        id="width"
-                        type="range"
-                        min="10"
-                        max="200"
-                        disabled={isAutoWidth}
-                        value={width}
-                        onChange={(e) => setWidth(parseInt(e.target.value) || 80)}
-                        className={cn(
-                          "flex-1 accent-[#00FF41] h-1 bg-white/5 rounded-none appearance-none cursor-pointer",
-                          isAutoWidth && "opacity-20 cursor-not-allowed"
-                        )}
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative border border-[#00FF41]/20 p-2 space-y-2">
+                        <div className="absolute top-0 left-0 w-1 h-3 bg-[#00FF41]" />
+                        <div className="absolute top-0 left-0 w-3 h-1 bg-[#00FF41]" />
+                        <span className="inline-flex w-full justify-center text-[8px] font-black uppercase tracking-widest text-[#00FF41]/70">
+                          WIDTH {width}
+                        </span>
+                        <input
+                          id="width"
+                          type="range"
+                          min="10"
+                          max="200"
+                          disabled={isAutoWidth}
+                          value={width}
+                          onChange={(e) => setWidth(parseInt(e.target.value) || 80)}
+                          className={cn(
+                            "w-full accent-[#00FF41] h-1 bg-white/5 rounded-none appearance-none cursor-pointer",
+                            isAutoWidth && "opacity-20 cursor-not-allowed"
+                          )}
+                        />
+                      </div>
+                      <div className="relative border border-[#00FF41]/20 p-2 space-y-2">
+                        <div className="absolute top-0 left-0 w-1 h-3 bg-[#00FF41]" />
+                        <div className="absolute top-0 left-0 w-3 h-1 bg-[#00FF41]" />
+                        <span className="inline-flex w-full justify-center text-[8px] font-black uppercase tracking-widest text-[#00FF41]/70">
+                          FONT {previewFontSize}px
+                        </span>
+                        <input
+                          id="previewFontSize"
+                          type="range"
+                          min="10"
+                          max="20"
+                          value={previewFontSize}
+                          onChange={(e) => setPreviewFontSize(parseInt(e.target.value) || 12)}
+                          className="w-full accent-[#00FF41] h-1 bg-white/5 rounded-none appearance-none cursor-pointer"
+                          title="Preview Font Size"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -542,12 +600,95 @@ export default function App() {
                       </select>
                     </div>
                   </div>
+
+                  <div className="pt-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
+                        <Cpu size={12} /> FONT_CORE
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleRandomFont}
+                          className="h-7 w-7 shrink-0 rounded-none border border-[#00FF41]/20 bg-black/60 text-[#00FF41]/70 hover:text-[#00FF41] hover:bg-[#00FF41]/10 transition-all flex items-center justify-center"
+                          title="Random Font"
+                        >
+                          <Dices size={12} />
+                        </button>
+                        <span className="text-[9px] font-mono text-[#00FF41]/20">{availableFonts.length} SYS</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileFontMenuOpen(prev => !prev)}
+                      className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none px-3 py-2 text-[10px] font-mono text-[#00FF41] flex items-center justify-between"
+                    >
+                      <span className="truncate text-left">{font.toUpperCase()}</span>
+                      <ChevronDown size={14} className={cn("text-[#00FF41]/40 transition-transform", isMobileFontMenuOpen && "rotate-180")} />
+                    </button>
+
+                    {isMobileFontMenuOpen && (
+                      <div className="border border-[#00FF41]/20 bg-black/85">
+                        <div className="p-2 border-b border-[#00FF41]/10">
+                          <div className="relative">
+                            <input
+                              id="font"
+                              type="text"
+                              placeholder="SEARCH_FONTS..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none pl-8 pr-3 py-2 text-[10px] font-mono focus:outline-none focus:border-[#00FF41] text-[#00FF41] placeholder-[#00FF41]/20"
+                            />
+                            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#00FF41]/30" />
+                          </div>
+                        </div>
+                        <div className="max-h-56 overflow-y-auto p-2 space-y-1 custom-scrollbar bg-black/10">
+                          {filteredFonts.map((f) => (
+                            <button
+                              key={f}
+                              onClick={() => {
+                                setFont(f);
+                                if (window.matchMedia('(max-width: 1024px)').matches) {
+                                  setIsMobileFontMenuOpen(false);
+                                }
+                              }}
+                              id={`font-opt-${f}`}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 rounded-none text-xs font-mono transition-all group border",
+                                font === f
+                                  ? "bg-[#00FF41]/10 text-[#00FF41] border-[#00FF41]/40 shadow-[inset_0_0_10px_rgba(0,255,65,0.1)]"
+                                  : "text-white/30 hover:bg-white/5 border-transparent hover:border-white/10"
+                              )}
+                            >
+                              <span className="truncate">{f.toUpperCase()}</span>
+                              <div className="flex items-center gap-2">
+                                {favorites.includes(f) && <Star size={10} className="fill-[#00FF41] text-[#00FF41]" />}
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite(f);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-none"
+                                >
+                                  <Star size={12} className={cn(favorites.includes(f) ? "fill-[#00FF41] text-[#00FF41]" : "text-white/10")} />
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
 
               {/* History Section */}
               {history.length > 0 && (
-                <section className="hidden lg:block bg-[#0D0D0F] border border-white/5 rounded-none p-5 space-y-4 shadow-2xl shrink-0">
+                <section className="hidden lg:block bg-[#0D0D0F] border border-white/5 rounded-none p-5 space-y-4 shadow-2xl shrink-0 relative">
+                  <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
+                  <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
                   <div className="flex items-center justify-between">
                     <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2">
                       <History size={12} /> RECENT_LOGS
@@ -577,113 +718,8 @@ export default function App() {
                 </section>
               )}
 
-              {/* Font Selector */}
-              <section className="hidden lg:flex bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none flex-col min-h-[300px] lg:h-[400px] shadow-2xl overflow-hidden shrink-0 lg:shrink relative">
-                <div className="p-4 border-b border-[#00FF41]/10 space-y-3 bg-black/20">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
-                      <Cpu size={12} /> FONT_CORE
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={handleRandomFont}
-                        className="p-1.5 rounded-none hover:bg-[#00FF41]/10 text-[#00FF41]/40 hover:text-[#00FF41] transition-all border border-transparent hover:border-[#00FF41]/20"
-                        title="Random Font"
-                      >
-                        <Dices size={14} />
-                      </button>
-                      <span id="info" className="text-[9px] font-mono text-[#00FF41]/20">{availableFonts.length} SYS</span>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      id="font"
-                      type="text"
-                      placeholder="SEARCH_FONTS..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none pl-8 pr-3 py-2 text-[10px] font-mono focus:outline-none focus:border-[#00FF41] text-[#00FF41] placeholder-[#00FF41]/20"
-                    />
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#00FF41]/30" />
-                  </div>
-                </div>
-
-                <div className="hidden lg:block flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar bg-black/10">
-                  {filteredFonts.map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFont(f)}
-                      id={`font-opt-${f}`}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3 py-2 rounded-none text-xs font-mono transition-all group border",
-                        font === f 
-                          ? "bg-[#00FF41]/10 text-[#00FF41] border-[#00FF41]/40 shadow-[inset_0_0_10px_rgba(0,255,65,0.1)]" 
-                          : "text-white/30 hover:bg-white/5 border-transparent hover:border-white/10"
-                      )}
-                    >
-                      <span className="truncate">{f.toUpperCase()}</span>
-                      <div className="flex items-center gap-2">
-                        {favorites.includes(f) && <Star size={10} className="fill-[#00FF41] text-[#00FF41]" />}
-                        <div 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(f);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-none"
-                        >
-                          <Star size={12} className={cn(favorites.includes(f) ? "fill-[#00FF41] text-[#00FF41]" : "text-white/10")} />
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
             </motion.aside>
           )}
-
-          <div className="lg:hidden relative z-20">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsMobileFontMenuOpen(prev => !prev)}
-                className="flex-1 bg-black/60 border border-[#00FF41]/20 rounded-none px-3 py-2 text-[10px] font-mono text-[#00FF41] flex items-center justify-between"
-              >
-                <span className="truncate text-left">{font.toUpperCase()}</span>
-                <ChevronDown size={14} className={cn("text-[#00FF41]/40 transition-transform", isMobileFontMenuOpen && "rotate-180")} />
-              </button>
-              <button
-                type="button"
-                onClick={handleRandomFont}
-                className="h-9 w-9 shrink-0 rounded-none border border-[#00FF41]/20 bg-black/60 text-[#00FF41]/70 hover:text-[#00FF41] hover:bg-[#00FF41]/10 transition-all flex items-center justify-center"
-                title="Random Font"
-              >
-                <Dices size={14} />
-              </button>
-            </div>
-            {isMobileFontMenuOpen && (
-              <div className="mt-2 border border-[#00FF41]/20 bg-black/85 max-h-52 overflow-y-auto custom-scrollbar">
-                {mobileSortedFonts.map(f => (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => {
-                      setFont(f);
-                      setIsMobileFontMenuOpen(false);
-                    }}
-                    className={cn(
-                      "w-full px-3 py-2 text-left text-[10px] font-mono border-b border-[#00FF41]/10 last:border-b-0",
-                      font === f ? "bg-[#00FF41]/12 text-[#00FF41]" : "text-[#00FF41]/75 hover:bg-[#00FF41]/10"
-                    )}
-                  >
-                    {favorites.includes(f) ? `[*] ${f.toUpperCase()}` : f.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Right Area: Output */}
           <motion.section 
@@ -738,6 +774,8 @@ export default function App() {
             <div className="flex-1 min-h-0 relative group overflow-hidden">
               {/* Output Box */}
               <div className="absolute inset-0 bg-[#0D0D0F] border border-[#00FF41]/20 rounded-none shadow-[0_0_30px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
+                <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41] z-10" />
+                <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41] z-10" />
                 <div className="flex items-center justify-between px-4 py-2 border-b border-[#00FF41]/10 bg-black/40">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-none bg-[#FF5F56]/40" />
@@ -752,10 +790,11 @@ export default function App() {
                   <pre 
                     id="out"
                     ref={outputRef}
-                    className="absolute inset-0 p-8 font-mono text-sm overflow-auto custom-scrollbar whitespace-pre leading-none bg-black/20 selection:bg-[#00FF41]/40"
+                    className="absolute inset-0 p-8 font-mono overflow-auto custom-scrollbar whitespace-pre leading-none bg-black/20 selection:bg-[#00FF41]/40"
                     style={{ 
                       textShadow: '0 0 8px rgba(0, 255, 65, 0.2)',
-                      color: '#00FF41'
+                      color: '#00FF41',
+                      fontSize: `${previewFontSize}px`
                     }}
                   >
                     {output || '(rendered ASCII will show here)'}
@@ -778,6 +817,8 @@ export default function App() {
 
           {history.length > 0 && (
             <section className="lg:hidden bg-[#0D0D0F] border border-white/5 rounded-none p-5 space-y-4 shadow-2xl shrink-0 relative z-20">
+              <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
+              <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
               <div className="flex items-center justify-between">
                 <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2">
                   <History size={12} /> RECENT_LOGS
@@ -809,7 +850,13 @@ export default function App() {
         </div>
 
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#0D0D0F]/95 border-t border-[#00FF41]/20 backdrop-blur-md">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={handleExportUrl}
+              className="h-10 px-3 text-[10px] font-black uppercase tracking-widest border transition-all flex items-center justify-center gap-2 bg-black/60 border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/80"
+            >
+              <Link2 size={14} /> URL
+            </button>
             <button 
               onClick={() => handleExportPng(false)}
               disabled={isExporting}
