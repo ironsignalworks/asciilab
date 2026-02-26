@@ -40,8 +40,40 @@
     </main>
     <script>
       const params = new URLSearchParams(window.location.search);
-      const output = params.get('o');
-      document.getElementById('ascii').textContent = output && output.length ? output : '(no output)';
+      const text = params.get('t') || 'ASCII Lab';
+      const font = params.get('f') || 'Standard';
+      const width = Number.parseInt(params.get('w') || '80', 10);
+      const autoWidth = params.get('aw') === '1';
+      const hLayout = params.get('hl') || 'default';
+      const vLayout = params.get('vl') || 'default';
+      const outEl = document.getElementById('ascii');
+
+      const renderFallback = () => {
+        outEl.textContent = text || '(no output)';
+      };
+
+      const render = async () => {
+        try {
+          const figletModule = await import('https://cdn.jsdelivr.net/npm/figlet@1.10.0/+esm');
+          const figlet = figletModule.default || figletModule;
+          const fontUrl = `https://raw.githubusercontent.com/patorjk/figlet.js/master/fonts/${encodeURIComponent(font)}.flf`;
+          const response = await fetch(fontUrl, { cache: 'force-cache' });
+          if (!response.ok) throw new Error('font load failed');
+          const fontData = await response.text();
+          figlet.parseFont(font, fontData);
+          const ascii = figlet.textSync(text, {
+            font,
+            width: autoWidth ? undefined : width,
+            horizontalLayout: hLayout,
+            verticalLayout: vLayout
+          });
+          outEl.textContent = ascii || '(no output)';
+        } catch {
+          renderFallback();
+        }
+      };
+
+      render();
     </script>
   </body>
   </html>

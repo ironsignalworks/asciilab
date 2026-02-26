@@ -335,7 +335,12 @@ export default function App() {
     setIsExporting(true);
     try {
       const outputOnlyUrl = new URL(`${import.meta.env.BASE_URL}ascii.html`, window.location.origin);
-      outputOnlyUrl.searchParams.set('o', output || '(no output)');
+      outputOnlyUrl.searchParams.set('t', text || DEFAULT_TEXT);
+      outputOnlyUrl.searchParams.set('f', font);
+      outputOnlyUrl.searchParams.set('w', String(width));
+      outputOnlyUrl.searchParams.set('aw', isAutoWidth ? '1' : '0');
+      outputOnlyUrl.searchParams.set('hl', hLayout);
+      outputOnlyUrl.searchParams.set('vl', vLayout);
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=1024x1024&format=png&margin=20&data=${encodeURIComponent(outputOnlyUrl.toString())}`;
       const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
       const qrBlob = await fetch(qrApiUrl).then((res) => {
