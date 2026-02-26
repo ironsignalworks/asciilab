@@ -128,6 +128,7 @@ export default function App() {
   const [fontWarning, setFontWarning] = useState('');
   const [availableFonts, setAvailableFonts] = useState<string[]>(() => [...POPULAR_FONTS]);
   const [isMobileFontMenuOpen, setIsMobileFontMenuOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   const outputRef = useRef<HTMLPreElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -447,7 +448,7 @@ export default function App() {
             </div>
             <div className="relative">
               <h1 className="text-xs sm:text-sm font-black tracking-tighter uppercase italic glitch-text" data-text="ASCII LAB">ASCII LAB</h1>
-              <p className="text-[8px] sm:text-[9px] text-[#00FF41]/60 font-mono uppercase tracking-[0.2em]">Art Generator</p>
+              <p className="text-[8px] sm:text-[9px] text-[#00FF41]/75 font-mono uppercase tracking-[0.16em]">Art Generator</p>
             </div>
           </div>
 
@@ -457,14 +458,14 @@ export default function App() {
               <button 
                 onClick={() => handleExportPng(false)}
                 disabled={isExporting}
-                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-[#00FF41]/10 text-[#00FF41]/70 border-r border-[#00FF41]/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-[#00FF41]/10 text-[#00FF41]/85 border-r border-[#00FF41]/20 transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 <ImageIcon size={12} /> <span className="hidden sm:inline">EXPORT PNG</span><span className="sm:hidden">PNG</span>
               </button>
               <button 
                 onClick={() => handleExportPng(true)}
                 disabled={isExporting}
-                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-[#00FF41]/10 text-[#00FF41]/70 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-[#00FF41]/10 text-[#00FF41]/85 transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 <InfinityIcon size={12} /> ALPHA
               </button>
@@ -511,7 +512,7 @@ export default function App() {
             <motion.aside 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex flex-col gap-3 lg:h-full lg:min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-6"
+              className="order-2 lg:order-1 flex flex-col gap-3 lg:h-full lg:min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-6"
             >
               {/* Input Section */}
               <section className="bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none p-5 space-y-4 shadow-[0_0_20px_rgba(0,0,0,0.5)] shrink-0 relative">
@@ -522,20 +523,114 @@ export default function App() {
                   <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
                     <Type size={12} /> SOURCE_INPUT
                   </label>
-                  <div className="flex items-center gap-3 text-[9px] font-mono text-[#00FF41]/30">
+                  <div className="flex items-center gap-3 text-[9px] font-mono text-[#00FF41]/55">
                     <span>{text.trim() ? text.trim().split(/\s+/).length : 0} WDS</span>
                     <span>{text.length}/100 CHR</span>
                   </div>
                 </div>
-                <textarea
-                  id="text"
-                  value={text}
-                  onChange={(e) => setText(e.target.value.slice(0, 100))}
-                  placeholder="ENTER_DATA_STREAM..."
-                  className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none p-3 text-sm font-mono focus:outline-none focus:border-[#00FF41] focus:ring-0 transition-all min-h-[100px] resize-none text-[#00FF41] placeholder-[#00FF41]/20"
-                />
+                <div className="relative">
+                  <textarea
+                    id="text"
+                    value={text}
+                    onChange={(e) => setText(e.target.value.slice(0, 100))}
+                    placeholder="ENTER_DATA_STREAM..."
+                    className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none p-3 pr-8 text-sm font-mono leading-5 focus:outline-none focus:border-[#00FF41] focus:ring-0 transition-all min-h-[100px] resize-none text-[#00FF41] placeholder-[#00FF41]/20 caret-transparent"
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 overflow-hidden p-3 pr-8 text-sm font-mono leading-5"
+                    aria-hidden="true"
+                  >
+                    <span className="whitespace-pre-wrap break-words text-transparent">{text}</span>
+                    <span className="terminal-caret inline-block align-baseline">█</span>
+                  </div>
+                </div>
+              </section>
 
+              <section className="bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none p-5 space-y-4 shadow-[0_0_20px_rgba(0,0,0,0.5)] shrink-0 relative">
+                <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
+                <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
                 <div className="space-y-4">
+                  <div className="pt-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
+                        <Cpu size={12} /> FONT_CORE
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleRandomFont}
+                          className="dice-pulse h-7 w-7 shrink-0 rounded-none border border-[#00FF41]/20 bg-black/60 text-[#00FF41]/70 hover:text-[#00FF41] hover:bg-[#00FF41]/10 transition-all flex items-center justify-center"
+                          title="Random Font"
+                        >
+                          <Dices size={12} />
+                        </button>
+                        <span className="text-[9px] font-mono text-[#00FF41]/55">{availableFonts.length} SYS</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileFontMenuOpen(prev => !prev)}
+                      className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none px-3 py-2 text-[10px] font-mono text-[#00FF41] flex items-center justify-between"
+                    >
+                      <span className="truncate text-left">{font.toUpperCase()}</span>
+                      <ChevronDown size={14} className={cn("text-[#00FF41]/40 transition-transform", isMobileFontMenuOpen && "rotate-180")} />
+                    </button>
+
+                    {isMobileFontMenuOpen && (
+                      <div className="border border-[#00FF41]/20 bg-black/85">
+                        <div className="p-2 border-b border-[#00FF41]/10">
+                          <div className="relative">
+                            <input
+                              id="font"
+                              type="text"
+                              placeholder="SEARCH_FONTS..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none pl-8 pr-3 py-2 text-[10px] font-mono focus:outline-none focus:border-[#00FF41] text-[#00FF41] placeholder-[#00FF41]/20"
+                            />
+                            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#00FF41]/50" />
+                          </div>
+                        </div>
+                        <div className="max-h-56 overflow-y-auto p-2 space-y-1 custom-scrollbar bg-black/10">
+                          {filteredFonts.map((f) => (
+                            <button
+                              key={f}
+                              onClick={() => {
+                                setFont(f);
+                                if (window.matchMedia('(max-width: 1024px)').matches) {
+                                  setIsMobileFontMenuOpen(false);
+                                }
+                              }}
+                              id={`font-opt-${f}`}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 rounded-none text-[11px] font-mono transition-all group border",
+                                font === f
+                                  ? "bg-[#00FF41]/10 text-[#00FF41] border-[#00FF41]/40 shadow-[inset_0_0_10px_rgba(0,255,65,0.1)]"
+                                  : "text-white/75 hover:text-white hover:bg-white/5 border-transparent hover:border-white/20"
+                              )}
+                            >
+                              <span className="truncate">{f.toUpperCase()}</span>
+                              <div className="flex items-center gap-2">
+                                {favorites.includes(f) && <Star size={10} className="fill-[#00FF41] text-[#00FF41]" />}
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite(f);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-none"
+                                >
+                                  <Star size={12} className={cn(favorites.includes(f) ? "fill-[#00FF41] text-[#00FF41]" : "text-white/10")} />
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-3">
                 <div className="flex items-center justify-between">
                       <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
@@ -546,7 +641,9 @@ export default function App() {
                           onClick={() => setIsAutoWidth(!isAutoWidth)}
                           className={cn(
                             "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border transition-all",
-                            isAutoWidth ? "bg-[#00FF41] text-black border-[#00FF41]" : "bg-black border-[#00FF41]/20 text-[#00FF41]/40"
+                            isAutoWidth
+                              ? "bg-[#00FF41]/15 text-[#00FF41] border-[#00FF41]/60 shadow-[inset_0_0_10px_rgba(0,255,65,0.12)]"
+                              : "bg-black/60 border-[#00FF41]/20 text-[#00FF41]/60 hover:bg-[#00FF41]/10 hover:text-[#00FF41]"
                           )}
                         >
                           AUTO
@@ -569,7 +666,7 @@ export default function App() {
                           value={width}
                           onChange={(e) => setWidth(parseInt(e.target.value) || 80)}
                           className={cn(
-                            "w-full accent-[#00FF41] h-1 bg-white/5 rounded-none appearance-none cursor-pointer",
+                            "range-3d w-full accent-[#00FF41] h-1 rounded-none appearance-none cursor-pointer",
                             isAutoWidth && "opacity-20 cursor-not-allowed"
                           )}
                         />
@@ -587,7 +684,7 @@ export default function App() {
                           max="20"
                           value={previewFontSize}
                           onChange={(e) => setPreviewFontSize(parseInt(e.target.value) || 12)}
-                          className="w-full accent-[#00FF41] h-1 bg-white/5 rounded-none appearance-none cursor-pointer"
+                          className="range-3d w-full accent-[#00FF41] h-1 rounded-none appearance-none cursor-pointer"
                           title="Preview Font Size"
                         />
                       </div>
@@ -631,86 +728,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="pt-1 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
-                        <Cpu size={12} /> FONT_CORE
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={handleRandomFont}
-                          className="h-7 w-7 shrink-0 rounded-none border border-[#00FF41]/20 bg-black/60 text-[#00FF41]/70 hover:text-[#00FF41] hover:bg-[#00FF41]/10 transition-all flex items-center justify-center"
-                          title="Random Font"
-                        >
-                          <Dices size={12} />
-                        </button>
-                        <span className="text-[9px] font-mono text-[#00FF41]/20">{availableFonts.length} SYS</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsMobileFontMenuOpen(prev => !prev)}
-                      className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none px-3 py-2 text-[10px] font-mono text-[#00FF41] flex items-center justify-between"
-                    >
-                      <span className="truncate text-left">{font.toUpperCase()}</span>
-                      <ChevronDown size={14} className={cn("text-[#00FF41]/40 transition-transform", isMobileFontMenuOpen && "rotate-180")} />
-                    </button>
-
-                    {isMobileFontMenuOpen && (
-                      <div className="border border-[#00FF41]/20 bg-black/85">
-                        <div className="p-2 border-b border-[#00FF41]/10">
-                          <div className="relative">
-                            <input
-                              id="font"
-                              type="text"
-                              placeholder="SEARCH_FONTS..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none pl-8 pr-3 py-2 text-[10px] font-mono focus:outline-none focus:border-[#00FF41] text-[#00FF41] placeholder-[#00FF41]/20"
-                            />
-                            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#00FF41]/30" />
-                          </div>
-                        </div>
-                        <div className="max-h-56 overflow-y-auto p-2 space-y-1 custom-scrollbar bg-black/10">
-                          {filteredFonts.map((f) => (
-                            <button
-                              key={f}
-                              onClick={() => {
-                                setFont(f);
-                                if (window.matchMedia('(max-width: 1024px)').matches) {
-                                  setIsMobileFontMenuOpen(false);
-                                }
-                              }}
-                              id={`font-opt-${f}`}
-                              className={cn(
-                                "w-full flex items-center justify-between px-3 py-2 rounded-none text-xs font-mono transition-all group border",
-                                font === f
-                                  ? "bg-[#00FF41]/10 text-[#00FF41] border-[#00FF41]/40 shadow-[inset_0_0_10px_rgba(0,255,65,0.1)]"
-                                  : "text-white/30 hover:bg-white/5 border-transparent hover:border-white/10"
-                              )}
-                            >
-                              <span className="truncate">{f.toUpperCase()}</span>
-                              <div className="flex items-center gap-2">
-                                {favorites.includes(f) && <Star size={10} className="fill-[#00FF41] text-[#00FF41]" />}
-                                <div
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFavorite(f);
-                                  }}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-none"
-                                >
-                                  <Star size={12} className={cn(favorites.includes(f) ? "fill-[#00FF41] text-[#00FF41]" : "text-white/10")} />
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </section>
 
@@ -720,12 +737,12 @@ export default function App() {
                   <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
                   <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
                   <div className="flex items-center justify-between">
-                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
                       <History size={12} /> RECENT_LOGS
                     </label>
                     <button 
                       onClick={() => setHistory([])}
-                      className="text-[8px] font-black uppercase tracking-widest text-white/20 hover:text-[#FF5F56]"
+                      className="text-[8px] font-black uppercase tracking-widest text-white/55 hover:text-[#FF5F56]"
                     >
                       WIPE
                     </button>
@@ -738,7 +755,7 @@ export default function App() {
                           setText(h.t);
                           setFont(h.f);
                         }}
-                        className="px-2 py-1 rounded-none bg-white/5 border border-white/10 text-[9px] font-mono text-white/40 hover:border-[#00FF41]/40 hover:text-[#00FF41] transition-all truncate max-w-[120px]"
+                        className="px-2 py-1 rounded-none bg-white/5 border border-white/20 text-[10px] font-mono text-white/80 hover:border-[#00FF41]/40 hover:text-[#00FF41] transition-all truncate max-w-[120px]"
                         title={`${h.t} (${h.f})`}
                       >
                         {h.t}
@@ -748,6 +765,35 @@ export default function App() {
                 </section>
               )}
 
+              <section className="mt-auto bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none p-4 space-y-3 shadow-[0_0_20px_rgba(0,0,0,0.45)] shrink-0 relative">
+                <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
+                <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
+                <button
+                  type="button"
+                  onClick={() => setIsAboutOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between bg-black/60 border border-[#00FF41]/20 rounded-none px-3 py-2 text-[10px] font-mono text-[#00FF41] hover:bg-[#00FF41]/10 transition-all"
+                >
+                  <span className="flex items-center gap-2 tracking-[0.16em]">
+                    <Info size={12} /> ABOUT
+                  </span>
+                  <ChevronDown size={14} className={cn("text-[#00FF41]/50 transition-transform", isAboutOpen && "rotate-180")} />
+                </button>
+                {isAboutOpen && (
+                  <div className="border border-[#00FF41]/20 bg-black/40 p-3 space-y-3 text-[10px] font-mono text-white/75">
+                    <p className="text-[#00FF41]/85">
+                      ASCII Lab is a FIGlet-style generator for creating ASCII banners with live preview, font search, and quick export.
+                    </p>
+                    <div className="space-y-1 text-white/70">
+                      <p>1. Type your text in `SOURCE_INPUT`.</p>
+                      <p>2. Pick a font in `FONT_CORE` or use the dice button.</p>
+                      <p>3. Tune width/layout settings for final shape.</p>
+                      <p>4. Copy output or export PNG.</p>
+                      <p>5. Use `ALPHA` for transparent-background PNG export.</p>
+                    </div>
+                  </div>
+                )}
+              </section>
+
             </motion.aside>
           )}
 
@@ -755,7 +801,7 @@ export default function App() {
           <motion.section 
             layout
             ref={previewRef}
-            className="flex flex-col gap-3 min-h-[55vh] lg:h-full lg:min-h-0 overflow-hidden"
+            className="order-1 lg:order-2 flex flex-col gap-3 min-h-[55vh] lg:h-full lg:min-h-0 overflow-hidden"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between shrink-0">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -774,12 +820,12 @@ export default function App() {
                 >
                   {isPreviewFullscreen || isFullWidth ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 </button>
-                <div className="flex items-center gap-2 text-[9px] font-mono text-[#00FF41]/50 uppercase tracking-[0.2em]">
+                <div className="flex items-center gap-2 text-[9px] font-mono text-[#00FF41]/75 uppercase tracking-[0.16em]">
                   <Activity size={12} className="text-[#00FF41] animate-pulse" />
                   LIVE_FEED: {font.toUpperCase()}
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-[9px] font-mono tracking-widest">
+              <div className="flex items-center gap-3 text-[11px] font-mono tracking-[0.14em]">
                 {isRendering && (
                   <motion.div 
                     initial={{ opacity: 0 }}
@@ -790,7 +836,7 @@ export default function App() {
                     PROCESSING...
                   </motion.div>
                 )}
-                <div className="text-white/20">
+                <div className="text-white/80">
                   {output.split('\n').length} LN | {output.length} CHR
                 </div>
               </div>
@@ -811,9 +857,9 @@ export default function App() {
                     <div className="w-2 h-2 rounded-none bg-[#FF5F56]/40" />
                     <div className="w-2 h-2 rounded-none bg-[#FFBD2E]/40" />
                     <div className="w-2 h-2 rounded-none bg-[#27C93F]/40" />
-                    <div className="ml-4 text-[9px] font-mono text-[#00FF41]/40 uppercase tracking-[0.3em]">OUTPUT_BUFFER_01</div>
+                    <div className="ml-4 text-[9px] font-mono text-[#00FF41]/70 uppercase tracking-[0.2em]">OUTPUT_BUFFER_01</div>
                   </div>
-                  <div className="text-[8px] font-mono text-[#00FF41]/20">SECURE_CONNECTION_ESTABLISHED</div>
+                  <div className="text-[8px] font-mono text-[#00FF41]/55">SECURE_CONNECTION_ESTABLISHED</div>
                 </div>
                 
                 <div className="flex-1 relative overflow-hidden">
@@ -846,16 +892,16 @@ export default function App() {
           </motion.section>
 
           {history.length > 0 && (
-            <section className="lg:hidden bg-[#0D0D0F] border border-white/5 rounded-none p-5 space-y-4 shadow-2xl shrink-0 relative z-20">
+            <section className="order-3 lg:order-none lg:hidden bg-[#0D0D0F] border border-white/5 rounded-none p-5 space-y-4 shadow-2xl shrink-0 relative z-20">
               <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
               <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
               <div className="flex items-center justify-between">
-                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-2">
                   <History size={12} /> RECENT_LOGS
                 </label>
                 <button 
                   onClick={() => setHistory([])}
-                  className="text-[8px] font-black uppercase tracking-widest text-white/20 hover:text-[#FF5F56]"
+                  className="text-[8px] font-black uppercase tracking-widest text-white/55 hover:text-[#FF5F56]"
                 >
                   WIPE
                 </button>
@@ -868,7 +914,7 @@ export default function App() {
                       setText(h.t);
                       setFont(h.f);
                     }}
-                    className="px-2 py-1 rounded-none bg-white/5 border border-white/10 text-[9px] font-mono text-white/40 hover:border-[#00FF41]/40 hover:text-[#00FF41] transition-all truncate max-w-[120px]"
+                    className="px-2 py-1 rounded-none bg-white/5 border border-white/20 text-[10px] font-mono text-white/80 hover:border-[#00FF41]/40 hover:text-[#00FF41] transition-all truncate max-w-[120px]"
                     title={`${h.t} (${h.f})`}
                   >
                     {h.t}
@@ -972,13 +1018,80 @@ export default function App() {
           text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff;
         }
 
+        /* UX typography scale: readable but compact on mobile and desktop */
+        .text-\\[8px\\] { font-size: 9px !important; }
+        .text-\\[9px\\] { font-size: 10px !important; }
+        .text-\\[10px\\] { font-size: 11px !important; }
+        .text-\\[11px\\] { font-size: 12px !important; }
+        .text-xs { font-size: 0.8125rem !important; }
+        .text-sm { font-size: 1rem !important; }
+
+        @keyframes dicePulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(0, 255, 65, 0); }
+          50% { transform: scale(1.06); box-shadow: 0 0 10px rgba(0, 255, 65, 0.25); }
+        }
+
+        .dice-pulse {
+          animation: dicePulse 2.2s ease-in-out infinite;
+        }
+
+        @keyframes caretBlink {
+          0%, 45% { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+
+        .terminal-caret {
+          color: #00FF41;
+          font-family: monospace;
+          font-size: 12px;
+          line-height: 1;
+          text-shadow: 0 0 8px rgba(0, 255, 65, 0.4);
+          animation: caretBlink 1s steps(1, end) infinite;
+        }
+
         /* Custom range slider styling */
+        input[type=range].range-3d {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 6px;
+          border: 1px solid rgba(0, 255, 65, 0.2);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.35));
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            inset 0 -1px 0 rgba(0, 255, 65, 0.12),
+            0 0 0 1px rgba(0, 0, 0, 0.25);
+        }
+
+        input[type=range].range-3d::-webkit-slider-runnable-track {
+          height: 6px;
+          background: transparent;
+        }
+
         input[type=range]::-webkit-slider-thumb {
           -webkit-appearance: none;
           height: 12px;
           width: 12px;
           background: #00FF41;
           cursor: pointer;
+          border-radius: 0;
+          box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+          margin-top: -4px;
+        }
+
+        input[type=range].range-3d::-moz-range-track {
+          height: 6px;
+          border: 1px solid rgba(0, 255, 65, 0.2);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.35));
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            inset 0 -1px 0 rgba(0, 255, 65, 0.12);
+        }
+
+        input[type=range]::-moz-range-thumb {
+          height: 12px;
+          width: 12px;
+          border: 0;
+          background: #00FF41;
           border-radius: 0;
           box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
         }
