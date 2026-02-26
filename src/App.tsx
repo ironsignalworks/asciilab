@@ -16,6 +16,7 @@ import {
   History,
   Dices,
   Infinity as InfinityIcon,
+  QrCode,
   ChevronDown,
   Zap,
   Layers,
@@ -330,6 +331,53 @@ export default function App() {
     }
   };
 
+  const handleExportQr = async () => {
+    setIsExporting(true);
+    try {
+      const shareUrl = window.location.href;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=1024x1024&format=png&margin=20&data=${encodeURIComponent(shareUrl)}`;
+      const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
+      const qrBlob = await fetch(qrApiUrl).then((res) => {
+        if (!res.ok) throw new Error('QR generation failed');
+        return res.blob();
+      });
+      const fileName = `ascii-lab-qr-${font.toLowerCase()}.png`;
+      const qrFile = new File([qrBlob], fileName, { type: 'image/png' });
+
+      if (isMobile && typeof navigator.share === 'function') {
+        const canShareFiles = typeof navigator.canShare === 'function'
+          ? navigator.canShare({ files: [qrFile] })
+          : true;
+
+        if (canShareFiles) {
+          await navigator.share({
+            files: [qrFile],
+            title: 'ASCII Lab QR',
+            text: 'QR code for ASCII Lab share link'
+          });
+          return;
+        }
+      }
+
+      const blobUrl = URL.createObjectURL(qrBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.rel = 'noopener';
+      if (isMobile) {
+        link.target = '_blank';
+      }
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error('QR export failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleRandomFont = () => {
     const randomFont = availableFonts[Math.floor(Math.random() * availableFonts.length)];
     setFont(randomFont);
@@ -453,21 +501,32 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* PNG Export Pills in Nav */}
-            <div className="hidden sm:flex items-center bg-black/40 border border-[#00FF41]/20 rounded-none overflow-hidden">
+            {/* Export Actions */}
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-2 text-[9px] font-mono text-[#00FF41]/75 uppercase tracking-[0.16em]">
+                <Activity size={12} className="text-[#00FF41]" />
+                EXPORT:
+              </div>
               <button 
                 onClick={() => handleExportPng(false)}
                 disabled={isExporting}
-                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-[#00FF41]/10 text-[#00FF41]/85 border-r border-[#00FF41]/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="h-8 w-24 px-2 text-[9px] font-black uppercase tracking-widest bg-black/40 border border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/85 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                <ImageIcon size={12} /> <span className="hidden sm:inline">EXPORT PNG</span><span className="sm:hidden">PNG</span>
+                <ImageIcon size={12} /> PNG
               </button>
               <button 
                 onClick={() => handleExportPng(true)}
                 disabled={isExporting}
-                className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:bg-[#00FF41]/10 text-[#00FF41]/85 transition-all flex items-center gap-2 disabled:opacity-50"
+                className="h-8 w-24 px-2 text-[9px] font-black uppercase tracking-widest bg-black/40 border border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/85 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 <InfinityIcon size={12} /> ALPHA
+              </button>
+              <button
+                onClick={handleExportQr}
+                disabled={isExporting}
+                className="h-8 w-24 px-2 text-[9px] font-black uppercase tracking-widest bg-black/40 border border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/85 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <QrCode size={12} /> QR
               </button>
             </div>
 
@@ -477,7 +536,7 @@ export default function App() {
               <button 
                 onClick={handleCopy}
                 className={cn(
-                  "h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border",
+                  "hidden sm:flex h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest transition-all items-center gap-2 border",
                   copyStatus === 'copied' 
                     ? "bg-[#00FF41] text-black border-[#00FF41] shadow-[0_0_10px_rgba(0,255,65,0.5)]" 
                     : "bg-black/40 border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]"
@@ -488,9 +547,9 @@ export default function App() {
               </button>
               <button 
                 onClick={handleDownload}
-                className="hidden sm:flex h-8 px-4 rounded-none text-[10px] font-black uppercase tracking-widest bg-black/40 border border-white/10 hover:border-[#00FF41]/50 text-white/70 transition-all items-center gap-2"
+                className="hidden sm:flex h-8 w-24 px-2 rounded-none text-[9px] font-black uppercase tracking-widest bg-black/40 border border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/85 transition-all items-center justify-center gap-1.5"
               >
-                <Download size={14} />
+                <Download size={12} />
                 TXT
               </button>
             </div>
@@ -506,16 +565,46 @@ export default function App() {
           "grid gap-3 transition-all duration-500 h-auto lg:h-full lg:min-h-0 relative z-20",
           isFullWidth ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[380px_1fr]"
         )}>
+          <section className="lg:hidden order-1 bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none p-5 space-y-4 shadow-[0_0_20px_rgba(0,0,0,0.5)] shrink-0 relative">
+            <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
+            <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
+
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[#00FF41]/60 flex items-center gap-2">
+                <Type size={12} /> SOURCE_INPUT
+              </label>
+              <div className="flex items-center gap-3 text-[9px] font-mono text-[#00FF41]/55">
+                <span>{text.trim() ? text.trim().split(/\s+/).length : 0} WDS</span>
+                <span>{text.length}/100 CHR</span>
+              </div>
+            </div>
+            <div className="relative">
+              <textarea
+                id="text-mobile"
+                value={text}
+                onChange={(e) => setText(e.target.value.slice(0, 100))}
+                placeholder="ENTER_DATA_STREAM..."
+                className="w-full bg-black/60 border border-[#00FF41]/20 rounded-none p-3 pr-8 text-sm font-mono leading-5 focus:outline-none focus:border-[#00FF41] focus:ring-0 transition-all min-h-[100px] resize-none text-[#00FF41] placeholder-[#00FF41]/20 caret-transparent"
+              />
+              <div
+                className="pointer-events-none absolute inset-0 overflow-hidden p-3 pr-8 text-sm font-mono leading-5"
+                aria-hidden="true"
+              >
+                <span className="whitespace-pre-wrap break-words text-transparent">{text}</span>
+                <span className="terminal-caret inline-block align-baseline">█</span>
+              </div>
+            </div>
+          </section>
           
           {/* Left Sidebar: Controls */}
           {!isFullWidth && (
             <motion.aside 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="order-2 lg:order-1 flex flex-col gap-3 lg:h-full lg:min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-6"
+              className="order-3 lg:order-1 flex flex-col gap-3 lg:h-full lg:min-h-0 overflow-y-auto custom-scrollbar pr-0 lg:pr-2 pb-6"
             >
               {/* Input Section */}
-              <section className="bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none p-5 space-y-4 shadow-[0_0_20px_rgba(0,0,0,0.5)] shrink-0 relative">
+              <section className="hidden lg:block bg-[#0D0D0F] border border-[#00FF41]/10 rounded-none p-5 space-y-4 shadow-[0_0_20px_rgba(0,0,0,0.5)] shrink-0 relative">
                 <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41]" />
                 <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41]" />
                 
@@ -801,7 +890,7 @@ export default function App() {
           <motion.section 
             layout
             ref={previewRef}
-            className="order-1 lg:order-2 flex flex-col gap-3 min-h-[55vh] lg:h-full lg:min-h-0 overflow-hidden"
+            className="order-2 lg:order-2 flex flex-col gap-3 min-h-[55vh] lg:h-full lg:min-h-0 overflow-hidden"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between shrink-0">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -852,14 +941,18 @@ export default function App() {
               <div className="absolute inset-0 bg-[#0D0D0F] border border-[#00FF41]/20 rounded-none shadow-[0_0_30px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
                 <div className="absolute top-0 left-0 w-1 h-4 bg-[#00FF41] z-10" />
                 <div className="absolute top-0 left-0 w-4 h-1 bg-[#00FF41] z-10" />
-                <div className="flex items-center justify-between px-4 py-2 border-b border-[#00FF41]/10 bg-black/40">
+                <div className="grid grid-cols-[72px_1fr_72px] sm:grid-cols-[96px_1fr_220px] items-center px-4 py-2 border-b border-[#00FF41]/10 bg-black/40">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-none bg-[#FF5F56]/40" />
                     <div className="w-2 h-2 rounded-none bg-[#FFBD2E]/40" />
                     <div className="w-2 h-2 rounded-none bg-[#27C93F]/40" />
-                    <div className="ml-4 text-[9px] font-mono text-[#00FF41]/70 uppercase tracking-[0.2em]">OUTPUT_BUFFER_01</div>
                   </div>
-                  <div className="text-[8px] font-mono text-[#00FF41]/55">SECURE_CONNECTION_ESTABLISHED</div>
+                  <div className="justify-self-center border border-[#00FF41]/20 bg-black/35 px-3 py-1 text-[9px] font-mono text-[#00FF41]/75 uppercase tracking-[0.16em]">
+                    OUTPUT_BUFFER_01
+                  </div>
+                  <div className="justify-self-end text-[8px] font-mono text-[#00FF41]/55 whitespace-nowrap overflow-hidden text-ellipsis">
+                    SECURE_CONNECTION_ESTABLISHED
+                  </div>
                 </div>
                 
                 <div className="flex-1 relative overflow-hidden">
@@ -926,7 +1019,23 @@ export default function App() {
         </div>
 
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#0D0D0F]/95 border-t border-[#00FF41]/20 backdrop-blur-md">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              onClick={handleExportQr}
+              disabled={isExporting}
+              className="h-10 px-3 text-[10px] font-black uppercase tracking-widest bg-black/60 border border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/80 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <QrCode size={14} /> QR
+            </button>
+            <button
+              onClick={handleCopy}
+              className={cn(
+                "h-10 px-3 text-[10px] font-black uppercase tracking-widest bg-black/60 border border-[#00FF41]/30 hover:bg-[#00FF41]/10 text-[#00FF41]/80 transition-all flex items-center justify-center gap-2",
+                copyStatus === 'copied' && "bg-[#00FF41] text-black border-[#00FF41]"
+              )}
+            >
+              <Copy size={14} /> {copyStatus === 'copied' ? 'COPIED' : 'COPY'}
+            </button>
             <button 
               onClick={() => handleExportPng(false)}
               disabled={isExporting}
