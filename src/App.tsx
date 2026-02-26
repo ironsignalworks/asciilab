@@ -1065,14 +1065,24 @@ export default function App() {
             <Info size={10} />
             ENCRYPTED_SESSION_ACTIVE // HASH_SYNC_ENABLED
           </div>
-          <a
-            href="https://ironsignalworks.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[#00FF41]/90 hover:text-[#00FF41] transition-colors"
-          >
-            BUILT BY IRON SIGNAL WORKS
-          </a>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <a
+              href="https://donate.stripe.com/4gMdR25le5GXenHbrT5Ne00"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#00FF41]/90 hover:text-[#00FF41] transition-colors"
+            >
+              Help keep this free
+            </a>
+            <a
+              href="https://ironsignalworks.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#00FF41]/90 hover:text-[#00FF41] transition-colors"
+            >
+              BUILT BY IRON SIGNAL WORKS
+            </a>
+          </div>
         </div>
       </footer>
 
