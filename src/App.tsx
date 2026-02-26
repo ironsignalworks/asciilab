@@ -365,18 +365,46 @@ export default function App() {
         }
       }
 
-      const blobUrl = URL.createObjectURL(qrBlob);
+      const qrUrl = URL.createObjectURL(qrBlob);
+      const qrWindow = window.open('', '_blank', 'noopener,noreferrer');
+      if (qrWindow) {
+        qrWindow.document.write(`
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ASCII Lab QR</title>
+  <style>
+    html, body { margin: 0; background: #000; color: #00FF41; font-family: monospace; }
+    .wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
+    img { width: min(84vw, 640px); height: auto; image-rendering: crisp-edges; border: 1px solid rgba(0,255,65,0.3); }
+    p { margin: 12px 0 0; font-size: 12px; opacity: 0.75; letter-spacing: 0.08em; text-transform: uppercase; }
+    @media print { p { display: none; } body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div>
+      <img src="${qrUrl}" alt="ASCII Lab QR Code" />
+      <p>Print this QR to open output-only ASCII page</p>
+    </div>
+  </div>
+</body>
+</html>`);
+        qrWindow.document.close();
+        setTimeout(() => URL.revokeObjectURL(qrUrl), 10000);
+        return;
+      }
+
       const link = document.createElement('a');
-      link.href = blobUrl;
+      link.href = qrUrl;
       link.download = fileName;
       link.rel = 'noopener';
-      if (isMobile) {
-        link.target = '_blank';
-      }
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      URL.revokeObjectURL(qrUrl);
     } catch (err) {
       console.error('QR export failed:', err);
     } finally {
