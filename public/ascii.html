@@ -25,6 +25,15 @@
         place-items: center;
       }
 
+      img {
+        display: block;
+        max-width: min(96vw, 1400px);
+        width: auto;
+        height: auto;
+        border: 1px solid rgba(0, 255, 65, 0.28);
+        box-shadow: 0 0 24px rgba(0, 255, 65, 0.12);
+      }
+
       pre {
         margin: 0;
         white-space: pre;
@@ -36,7 +45,8 @@
   </head>
   <body>
     <main>
-      <pre id="ascii">(no output)</pre>
+      <img id="ascii-image" alt="ASCII output image" />
+      <pre id="ascii" hidden>(no output)</pre>
     </main>
     <script>
       const params = new URLSearchParams(window.location.search);
@@ -46,9 +56,40 @@
       const autoWidth = params.get('aw') === '1';
       const hLayout = params.get('hl') || 'default';
       const vLayout = params.get('vl') || 'default';
+      const fontSize = Math.min(24, Math.max(10, Number.parseInt(params.get('fs') || '12', 10)));
       const outEl = document.getElementById('ascii');
+      const imageEl = document.getElementById('ascii-image');
+
+      const renderImage = (ascii) => {
+        const lines = ascii.split('\n');
+        const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
+        const charWidth = Math.max(6, Math.floor(fontSize * 0.62));
+        const lineHeight = Math.max(10, Math.floor(fontSize * 1.08));
+        const padding = 28;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(280, padding * 2 + longestLine * charWidth);
+        canvas.height = Math.max(180, padding * 2 + lines.length * lineHeight);
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('canvas unavailable');
+
+        ctx.fillStyle = '#060708';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00FF41';
+        ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+        ctx.textBaseline = 'top';
+
+        for (let i = 0; i < lines.length; i += 1) {
+          ctx.fillText(lines[i], padding, padding + i * lineHeight);
+        }
+
+        imageEl.src = canvas.toDataURL('image/png');
+      };
 
       const renderFallback = () => {
+        imageEl.hidden = true;
+        outEl.hidden = false;
         outEl.textContent = text || '(no output)';
       };
 
@@ -67,7 +108,9 @@
             horizontalLayout: hLayout,
             verticalLayout: vLayout
           });
-          outEl.textContent = ascii || '(no output)';
+          const rendered = ascii || '(no output)';
+          renderImage(rendered);
+          outEl.textContent = rendered;
         } catch {
           renderFallback();
         }
