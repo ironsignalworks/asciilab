@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASCII Output</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #060708;
+        color: #00ff41;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+
+      main {
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 20px;
+        display: grid;
+        place-items: center;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre;
+        font-size: clamp(9px, 1.8vw, 16px);
+        line-height: 1;
+        text-shadow: 0 0 8px rgba(0, 255, 65, 0.18);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <pre id="ascii">(no output)</pre>
+    </main>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const output = params.get('o');
+      document.getElementById('ascii').textContent = output && output.length ? output : '(no output)';
+    </script>
+  </body>
+  </html>

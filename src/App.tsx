@@ -334,8 +334,9 @@ export default function App() {
   const handleExportQr = async () => {
     setIsExporting(true);
     try {
-      const shareUrl = window.location.href;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=1024x1024&format=png&margin=20&data=${encodeURIComponent(shareUrl)}`;
+      const outputOnlyUrl = new URL(`${import.meta.env.BASE_URL}ascii.html`, window.location.origin);
+      outputOnlyUrl.searchParams.set('o', output || '(no output)');
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=1024x1024&format=png&margin=20&data=${encodeURIComponent(outputOnlyUrl.toString())}`;
       const isMobile = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
       const qrBlob = await fetch(qrApiUrl).then((res) => {
         if (!res.ok) throw new Error('QR generation failed');
