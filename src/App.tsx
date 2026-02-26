@@ -334,7 +334,11 @@ export default function App() {
   const handleExportQr = async () => {
     setIsExporting(true);
     try {
-      const outputOnlyUrl = new URL(`${import.meta.env.BASE_URL}ascii.html`, window.location.origin);
+      const currentUrl = new URL(window.location.href);
+      const basePath = currentUrl.pathname.endsWith('/')
+        ? currentUrl.pathname
+        : currentUrl.pathname.replace(/[^/]*$/, '');
+      const outputOnlyUrl = new URL(`${basePath}ascii.html`, currentUrl.origin);
       outputOnlyUrl.searchParams.set('t', text || DEFAULT_TEXT);
       outputOnlyUrl.searchParams.set('f', font);
       outputOnlyUrl.searchParams.set('w', String(width));
