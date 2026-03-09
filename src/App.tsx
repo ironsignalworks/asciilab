@@ -61,6 +61,14 @@ const LAYOUT_OPTIONS: figlet.KerningMethods[] = [
   'universal smushing'
 ];
 
+type OrientationLockType =
+  | 'portrait'
+  | 'portrait-primary'
+  | 'portrait-secondary'
+  | 'landscape'
+  | 'landscape-primary'
+  | 'landscape-secondary';
+
 const parseNumberInRange = (value: string | null, fallback: number, min: number, max: number) => {
   const parsed = Number.parseInt(value ?? '', 10);
   if (Number.isNaN(parsed)) return fallback;
